@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Tool</title>
+    <style>
+        @font-face {
+            font-family: "Trim Poster";
+            font-display: swap;
+            src: url("./TrimPosterRegular.otf") format("opentype");
+        }
+        @font-face {
+            font-family: "Circular Std medium";
+            font-display: swap;
+            src: url("./CircularStd-Medium.otf") format("opentype");
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f5f5f5;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            background-size: cover;
+        }
+
+        body.has-bg {
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+                var(--bg-image);
+        }
+
+        header {
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        header img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        main {
+            max-width: 600px;
+            margin: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
+            width: calc(100% - 40px);
+            box-sizing: border-box;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            font-family: 'Trim Poster', Arial, sans-serif;
+            margin-top: 0;
+        }
+
+        p {
+            font-family: 'Circular Std medium', Arial, sans-serif;
+            font-size: 1em;
+            line-height: 1.5;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            white-space: pre-line;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            max-width: 400px;
+            font-size: 1em;
+            box-sizing: border-box;
+            font-family: 'Circular Std medium', Arial, sans-serif;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            cursor: pointer;
+            margin-top: 10px;
+            font-family: 'Circular Std medium', Arial, sans-serif;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        .error {
+            color: #b00020;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <header id="header" style="display:none;">
+        <img id="logo" alt="Logo">
+    </header>
+
+    <main>
+        <h1 id="heading">Email Tool</h1>
+        <p id="intro">This page has not been configured yet.</p>
+
+        <form id="email-form">
+            <input type="text" id="name" placeholder="Enter your name" required>
+            <button type="submit" id="submit-button" disabled>Send Email</button>
+        </form>
+
+        <p id="error" class="error" style="display:none;"></p>
+    </main>
+
+    <script>
+        function decodeConfigFromHash() {
+            const hash = window.location.hash.startsWith('#')
+                ? window.location.hash.slice(1)
+                : window.location.hash;
+
+            const params = new URLSearchParams(hash);
+            const data = params.get('data');
+            if (!data) return null;
+
+            try {
+                const json = decodeURIComponent(escape(atob(data)));
+                return JSON.parse(json);
+            } catch (err) {
+                console.error('Could not decode config:', err);
+                return null;
+            }
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function applyConfig(config) {
+            const defaults = {
+                pageTitle: 'Email Tool',
+                heading: 'Email Tool',
+                intro: '',
+                logoUrl: '',
+                backgroundImageUrl: '',
+                namePlaceholder: 'Enter your name',
+                buttonText: 'Send Email',
+                toEmail: '',
+                ccEmail: '',
+                bccEmail: '',
+                subject: '',
+                emailBody: ''
+            };
+
+            const cfg = { ...defaults, ...config };
+
+            document.title = cfg.pageTitle;
+            document.getElementById('heading').textContent = cfg.heading;
+            document.getElementById('intro').textContent = cfg.intro;
+            document.getElementById('name').placeholder = cfg.namePlaceholder;
+            document.getElementById('submit-button').textContent = cfg.buttonText;
+
+            if (cfg.logoUrl) {
+                const header = document.getElementById('header');
+                const logo = document.getElementById('logo');
+                logo.src = cfg.logoUrl;
+                header.style.display = 'block';
+            }
+
+            if (cfg.backgroundImageUrl) {
+                document.body.classList.add('has-bg');
+                document.body.style.setProperty('--bg-image', `url("${cfg.backgroundImageUrl}")`);
+            }
+
+            return cfg;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const config = decodeConfigFromHash();
+
+            if (!config) {
+                showError('No configuration was found in the URL.');
+                return;
+            }
+
+            const cfg = applyConfig(config);
+
+            const nameInput = document.getElementById('name');
+            const submitButton = document.getElementById('submit-button');
+            const form = document.getElementById('email-form');
+
+            nameInput.addEventListener('input', () => {
+                submitButton.disabled = !nameInput.value.trim();
+            });
+
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+
+                const name = nameInput.value.trim();
+                if (!name) return;
+
+                let emailBody = cfg.emailBody || '';
+                if (emailBody && !emailBody.endsWith('\n')) {
+                    emailBody += '\n';
+                }
+                emailBody += name;
+
+                const params = new URLSearchParams();
+                if (cfg.ccEmail) params.set('cc', cfg.ccEmail);
+                if (cfg.bccEmail) params.set('bcc', cfg.bccEmail);
+                if (cfg.subject) params.set('subject', cfg.subject);
+                params.set('body', emailBody);
+
+                const mailtoLink = `mailto:${encodeURIComponent(cfg.toEmail || '')}?${params.toString()}`;
+                window.location.href = mailtoLink;
+            });
+        });
+    </script>
+</body>
+</html>
