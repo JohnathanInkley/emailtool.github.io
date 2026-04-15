@@ -4,21 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Tool Builder</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
     <style>
+        @font-face {
+            font-family: "Trim Poster";
+            font-display: swap;
+            src: url("./TrimPosterRegular.otf") format("opentype");
+        }
+
+        @font-face {
+            font-family: "Circular Std medium";
+            font-display: swap;
+            src: url("./CircularStd-Medium.otf") format("opentype");
+        }
+
         body {
             font-family: Arial, sans-serif;
-            max-width: 900px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
             background: #f7f7f7;
             color: #222;
         }
 
-        h1 {
+        h1, h2, h3 {
             margin-top: 0;
         }
 
-        .section {
+        .layout {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 24px;
+        }
+
+        .panel {
             background: white;
             padding: 18px;
             margin-bottom: 20px;
@@ -48,6 +69,16 @@
             font-family: Arial, sans-serif;
         }
 
+        .checkbox-row {
+            margin-top: 14px;
+        }
+
+        .checkbox-row label {
+            display: inline;
+            font-weight: normal;
+            margin-left: 8px;
+        }
+
         button {
             padding: 12px 18px;
             font-size: 1rem;
@@ -56,14 +87,27 @@
             color: white;
             cursor: pointer;
             border-radius: 4px;
+            margin-right: 10px;
         }
 
         button:hover {
             background: #256a2a;
         }
 
-        .output {
-            margin-top: 15px;
+        .hidden {
+            display: none !important;
+        }
+
+        .small {
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        .note {
+            color: #555;
+            font-size: 0.92rem;
+            margin-top: 6px;
         }
 
         .output textarea {
@@ -71,117 +115,307 @@
             font-family: monospace;
         }
 
-        .small {
-            color: #666;
-            font-size: 0.95rem;
+        .preview-shell {
+            background:
+                linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+                url('https://pbs.twimg.com/media/FE-ZJDbXsAc9IPZ?format=jpg&name=large') no-repeat center center;
+            background-size: cover;
+            padding: 24px;
+            min-height: 700px;
         }
 
-        a.generated-link {
-            word-break: break-all;
+        .preview-header {
+            width: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .preview-header img {
+            max-width: 200px;
+            height: auto;
+        }
+
+        .preview-main {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .preview-main h1 {
+            text-align: center;
+            color: #333;
+            font-family: 'Trim Poster', Arial, sans-serif;
+        }
+
+        .preview-main p {
+            font-family: 'Circular Std medium', Arial, sans-serif;
+            font-size: 1em;
+            line-height: 1.5;
+            color: #666;
+            text-align: center;
+            margin-bottom: 20px;
+            white-space: pre-line;
+        }
+
+        .preview-form {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .preview-form input[type="text"] {
+            max-width: 400px;
+            font-family: 'Circular Std medium', Arial, sans-serif;
+        }
+
+        .preview-form button {
+            font-family: 'Circular Std medium', Arial, sans-serif;
+            background-color: #4CAF50;
+            width: auto;
+        }
+
+        .preview-form button:hover {
+            background-color: #45a049;
+        }
+
+        @media (max-width: 950px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <h1>Email Tool Builder</h1>
     <p class="small">
-        Fill in the fields below, then generate a shareable link to your email tool.
+        This creates a shareable link for a campaign email page hosted on your GitHub Pages site.
+        The LRU logo and background image are fixed.
     </p>
 
-    <div class="section">
-        <h2>Page content</h2>
+    <div class="layout">
+        <div>
+            <div class="panel">
+                <h2>Page content</h2>
 
-        <label for="baseUrl">Base URL of your public tool page</label>
-        <input type="url" id="baseUrl" placeholder="https://yourusername.github.io/yourrepo/index.html">
+                <label for="baseUrl">Base URL of your public tool page</label>
+                <input type="url" id="baseUrl" placeholder="https://yourusername.github.io/yourrepo/index.html">
 
-        <label for="pageTitle">Browser tab title</label>
-        <input type="text" id="pageTitle" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
+                <label for="pageTitle">Browser tab title</label>
+                <input type="text" id="pageTitle" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
 
-        <label for="heading">Main heading</label>
-        <input type="text" id="heading" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
+                <label for="heading">Main heading</label>
+                <input type="text" id="heading" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
 
-        <label for="intro">Intro paragraph</label>
-        <textarea id="intro" placeholder="Write the explanatory text shown above the form"></textarea>
+                <label for="intro">Intro paragraph</label>
+                <textarea id="intro" placeholder="Write the explanatory text shown above the form"></textarea>
 
-        <label for="logoUrl">Logo image URL</label>
-        <input type="url" id="logoUrl" placeholder="https://example.com/logo.png">
+                <label for="namePlaceholder">Name field placeholder</label>
+                <input type="text" id="namePlaceholder" value="Enter your name">
 
-        <label for="backgroundImageUrl">Background image URL</label>
-        <input type="url" id="backgroundImageUrl" placeholder="https://example.com/background.jpg">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="askPostcode">
+                    <label for="askPostcode">Ask user for their postcode?</label>
+                </div>
 
-        <label for="namePlaceholder">Name field placeholder</label>
-        <input type="text" id="namePlaceholder" value="Enter your name">
+                <div id="postcodeOptions" class="hidden">
+                    <label for="postcodePlaceholder">Postcode field placeholder</label>
+                    <input type="text" id="postcodePlaceholder" value="Enter your postcode">
+                </div>
 
-        <label for="buttonText">Button text</label>
-        <input type="text" id="buttonText" value="Send Email">
-    </div>
+                <label for="buttonText">Button text</label>
+                <input type="text" id="buttonText" value="Send Email">
+            </div>
 
-    <div class="section">
-        <h2>Email settings</h2>
+            <div class="panel">
+                <h2>Email settings</h2>
 
-        <label for="toEmail">To</label>
-        <input type="text" id="toEmail" placeholder="mayor@newham.gov.uk">
+                <label for="toEmail">To</label>
+                <input type="text" id="toEmail" placeholder="mayor@newham.gov.uk">
 
-        <label for="ccEmail">CC</label>
-        <input type="text" id="ccEmail" placeholder="newham-leytonstone@londonrentersunion.org">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="useCc">
+                    <label for="useCc">Add a CC address</label>
+                </div>
 
-        <label for="bccEmail">BCC</label>
-        <input type="text" id="bccEmail" placeholder="">
+                <div id="ccSection" class="hidden">
+                    <label for="ccEmail">CC</label>
+                    <input type="text" id="ccEmail" placeholder="branch@example.org">
+                    <div class="note">It’s often useful to put your branch’s email here so you know how many emails have been sent.</div>
+                </div>
 
-        <label for="subject">Email subject</label>
-        <input type="text" id="subject" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
+                <div class="checkbox-row">
+                    <input type="checkbox" id="useBcc">
+                    <label for="useBcc">Add a BCC address</label>
+                </div>
 
-        <label for="emailBody">Email body</label>
-        <textarea id="emailBody" placeholder="Paste the full email body here"></textarea>
-    </div>
+                <div id="bccSection" class="hidden">
+                    <label for="bccEmail">BCC</label>
+                    <input type="text" id="bccEmail" placeholder="someone@example.org">
+                </div>
 
-    <div class="section">
-        <button id="generateBtn">Generate Email Tool Link</button>
+                <label for="subject">Email subject</label>
+                <input type="text" id="subject" placeholder="Email subject">
 
-        <div class="output" id="output" style="display:none;">
-            <label for="generatedLink">Generated link</label>
-            <textarea id="generatedLink" readonly></textarea>
+                <label for="emailBody">Email body</label>
+                <textarea id="emailBody" placeholder="Paste the full email body here"></textarea>
+            </div>
 
-            <p>
-                <a id="openLink" class="generated-link" href="#" target="_blank" rel="noopener noreferrer">Open generated email tool</a>
-            </p>
+            <div class="panel">
+                <button id="generateBtn">Generate Email Tool Link</button>
+                <button id="copyBtn" type="button">Copy Link</button>
+
+                <div class="output" id="output" style="display:none; margin-top:16px;">
+                    <label for="generatedLink">Generated link</label>
+                    <textarea id="generatedLink" readonly></textarea>
+                    <p><a id="openLink" href="#" target="_blank" rel="noopener noreferrer">Open generated email tool</a></p>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="panel">
+                <h2>Preview</h2>
+                <div class="preview-shell">
+                    <div class="preview-header">
+                        <img src="https://londonrentersunion.org/wp-content/uploads/2018/05/lru-logo-from-eps.png" alt="London Renters Union Logo">
+                    </div>
+
+                    <div class="preview-main">
+                        <h1 id="previewHeading">Email Tool Heading</h1>
+                        <p id="previewIntro">Your intro text will appear here.</p>
+
+                        <div class="preview-form">
+                            <input type="text" id="previewName" placeholder="Enter your name" disabled>
+                            <input type="text" id="previewPostcode" placeholder="Enter your postcode" class="hidden" disabled>
+                            <button type="button" id="previewButton" disabled>Send Email</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        function encodeConfig(config) {
-            const json = JSON.stringify(config);
-            return btoa(unescape(encodeURIComponent(json)));
+        function updateVisibility() {
+            document.getElementById('postcodeOptions').classList.toggle(
+                'hidden',
+                !document.getElementById('askPostcode').checked
+            );
+
+            document.getElementById('ccSection').classList.toggle(
+                'hidden',
+                !document.getElementById('useCc').checked
+            );
+
+            document.getElementById('bccSection').classList.toggle(
+                'hidden',
+                !document.getElementById('useBcc').checked
+            );
         }
 
-        document.getElementById('generateBtn').addEventListener('click', () => {
-            const config = {
+        function updatePreview() {
+            document.getElementById('previewHeading').textContent =
+                document.getElementById('heading').value.trim() || 'Email Tool Heading';
+
+            document.getElementById('previewIntro').textContent =
+                document.getElementById('intro').value || 'Your intro text will appear here.';
+
+            document.getElementById('previewName').placeholder =
+                document.getElementById('namePlaceholder').value.trim() || 'Enter your name';
+
+            document.getElementById('previewButton').textContent =
+                document.getElementById('buttonText').value.trim() || 'Send Email';
+
+            const showPostcode = document.getElementById('askPostcode').checked;
+            const previewPostcode = document.getElementById('previewPostcode');
+
+            previewPostcode.classList.toggle('hidden', !showPostcode);
+            previewPostcode.placeholder =
+                document.getElementById('postcodePlaceholder').value.trim() || 'Enter your postcode';
+        }
+
+        function buildConfig() {
+            return {
                 pageTitle: document.getElementById('pageTitle').value.trim(),
                 heading: document.getElementById('heading').value.trim(),
                 intro: document.getElementById('intro').value,
-                logoUrl: document.getElementById('logoUrl').value.trim(),
-                backgroundImageUrl: document.getElementById('backgroundImageUrl').value.trim(),
                 namePlaceholder: document.getElementById('namePlaceholder').value.trim(),
+                postcodePlaceholder: document.getElementById('postcodePlaceholder').value.trim(),
                 buttonText: document.getElementById('buttonText').value.trim(),
                 toEmail: document.getElementById('toEmail').value.trim(),
-                ccEmail: document.getElementById('ccEmail').value.trim(),
-                bccEmail: document.getElementById('bccEmail').value.trim(),
+                ccEmail: document.getElementById('useCc').checked
+                    ? document.getElementById('ccEmail').value.trim()
+                    : '',
+                bccEmail: document.getElementById('useBcc').checked
+                    ? document.getElementById('bccEmail').value.trim()
+                    : '',
                 subject: document.getElementById('subject').value.trim(),
-                emailBody: document.getElementById('emailBody').value
+                emailBody: document.getElementById('emailBody').value,
+                askPostcode: document.getElementById('askPostcode').checked
             };
+        }
 
+        function generateLink() {
             const baseUrl = document.getElementById('baseUrl').value.trim();
             if (!baseUrl) {
                 alert('Please enter the base URL for your public tool page.');
                 return;
             }
 
-            const encoded = encodeConfig(config);
-            const fullLink = `${baseUrl}#data=${encoded}`;
+            const config = buildConfig();
+            const json = JSON.stringify(config);
+            const compressed = LZString.compressToEncodedURIComponent(json);
+            const fullLink = `${baseUrl}#data=${compressed}`;
 
             document.getElementById('generatedLink').value = fullLink;
             document.getElementById('openLink').href = fullLink;
             document.getElementById('output').style.display = 'block';
+        }
+
+        async function copyLink() {
+            const link = document.getElementById('generatedLink').value;
+            if (!link) {
+                alert('Generate a link first.');
+                return;
+            }
+
+            try {
+                await navigator.clipboard.writeText(link);
+                alert('Link copied.');
+            } catch (err) {
+                alert('Could not copy the link automatically.');
+            }
+        }
+
+        const fieldsToWatch = [
+            'heading',
+            'intro',
+            'namePlaceholder',
+            'postcodePlaceholder',
+            'buttonText',
+            'askPostcode'
+        ];
+
+        fieldsToWatch.forEach(id => {
+            document.getElementById(id).addEventListener('input', () => {
+                updateVisibility();
+                updatePreview();
+            });
+            document.getElementById(id).addEventListener('change', () => {
+                updateVisibility();
+                updatePreview();
+            });
         });
+
+        document.getElementById('useCc').addEventListener('change', updateVisibility);
+        document.getElementById('useBcc').addEventListener('change', updateVisibility);
+        document.getElementById('generateBtn').addEventListener('click', generateLink);
+        document.getElementById('copyBtn').addEventListener('click', copyLink);
+
+        updateVisibility();
+        updatePreview();
     </script>
 </body>
 </html>
