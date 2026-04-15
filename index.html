@@ -219,6 +219,14 @@
             return cfg;
         }
 
+        function normaliseEmailList(value) {
+            return (value || '')
+                .split(/[;,]/)
+                .map(part => part.trim())
+                .filter(Boolean)
+                .join(',');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             const config = getConfigFromUrl();
 
@@ -263,11 +271,15 @@
 
                 const queryParts = [];
                 
-                if (cfg.ccEmail) {
-                    queryParts.push(`cc=${encodeURIComponent(cfg.ccEmail)}`);
+                const toEmail = normaliseEmailList(cfg.toEmail);
+                const ccEmail = normaliseEmailList(cfg.ccEmail);
+                const bccEmail = normaliseEmailList(cfg.bccEmail);
+                
+                if (ccEmail) {
+                    queryParts.push(`cc=${encodeURIComponent(ccEmail)}`);
                 }
-                if (cfg.bccEmail) {
-                    queryParts.push(`bcc=${encodeURIComponent(cfg.bccEmail)}`);
+                if (bccEmail) {
+                    queryParts.push(`bcc=${encodeURIComponent(bccEmail)}`);
                 }
                 if (cfg.subject) {
                     queryParts.push(`subject=${encodeURIComponent(cfg.subject)}`);
@@ -276,7 +288,7 @@
                 queryParts.push(`body=${encodeURIComponent(emailBody)}`);
                 
                 const mailtoLink =
-                    `mailto:${encodeURIComponent(cfg.toEmail || '')}` +
+                    `mailto:${encodeURIComponent(toEmail)}` +
                     (queryParts.length ? `?${queryParts.join('&')}` : '');
                 
                 window.location.href = mailtoLink;
