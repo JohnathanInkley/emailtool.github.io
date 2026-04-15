@@ -261,14 +261,24 @@
                     emailBody += `\n${postcode}`;
                 }
 
-                const params = new URLSearchParams();
-
-                if (cfg.ccEmail) params.set('cc', cfg.ccEmail);
-                if (cfg.bccEmail) params.set('bcc', cfg.bccEmail);
-                if (cfg.subject) params.set('subject', cfg.subject);
-                params.set('body', emailBody);
-
-                const mailtoLink = `mailto:${encodeURIComponent(cfg.toEmail || '')}?${params.toString()}`;
+                const queryParts = [];
+                
+                if (cfg.ccEmail) {
+                    queryParts.push(`cc=${encodeURIComponent(cfg.ccEmail)}`);
+                }
+                if (cfg.bccEmail) {
+                    queryParts.push(`bcc=${encodeURIComponent(cfg.bccEmail)}`);
+                }
+                if (cfg.subject) {
+                    queryParts.push(`subject=${encodeURIComponent(cfg.subject)}`);
+                }
+                
+                queryParts.push(`body=${encodeURIComponent(emailBody)}`);
+                
+                const mailtoLink =
+                    `mailto:${encodeURIComponent(cfg.toEmail || '')}` +
+                    (queryParts.length ? `?${queryParts.join('&')}` : '');
+                
                 window.location.href = mailtoLink;
             });
 
