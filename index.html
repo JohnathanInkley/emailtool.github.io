@@ -20,11 +20,6 @@
             src: url("./CircularStd-Medium.otf") format("opentype");
         }
 
-        :root {
-            --fixed-logo-url: "https://londonrentersunion.org/wp-content/uploads/2018/05/lru-logo-from-eps.png";
-            --fixed-background-url: "https://pbs.twimg.com/media/FE-ZJDbXsAc9IPZ?format=jpg&name=large";
-        }
-
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -66,7 +61,7 @@
             margin-top: 0;
         }
 
-        p, label, .helper-text, .error-box {
+        p, .error-box {
             font-family: 'Circular Std medium', Arial, sans-serif;
         }
 
@@ -193,7 +188,6 @@
 
         function applyConfig(config) {
             const defaults = {
-                pageTitle: 'Email Tool',
                 heading: 'Email Tool',
                 intro: '',
                 namePlaceholder: 'Enter your name',
@@ -209,7 +203,7 @@
 
             const cfg = { ...defaults, ...config };
 
-            document.title = cfg.pageTitle;
+            document.title = cfg.heading || 'Email Tool';
             document.getElementById('heading').textContent = cfg.heading;
             document.getElementById('intro').textContent = cfg.intro;
             document.getElementById('name').placeholder = cfg.namePlaceholder;
@@ -255,13 +249,13 @@
                 const name = nameInput.value.trim();
                 const postcode = postcodeInput.value.trim();
 
-                let emailBody = cfg.emailBody || '';
+                let emailBody = (cfg.emailBody || '').replace(/\s+$/, '');
 
-                if (emailBody && !emailBody.endsWith('\n')) {
+                if (emailBody) {
                     emailBody += '\n';
                 }
 
-                emailBody += `\n${name}`;
+                emailBody += name;
 
                 if (cfg.askPostcode) {
                     emailBody += `\n${postcode}`;
