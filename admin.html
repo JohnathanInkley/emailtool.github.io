@@ -54,7 +54,6 @@
         }
 
         input[type="text"],
-        input[type="url"],
         textarea {
             width: 100%;
             box-sizing: border-box;
@@ -108,6 +107,19 @@
             color: #555;
             font-size: 0.92rem;
             margin-top: 6px;
+        }
+
+        .warning {
+            margin-top: 16px;
+            padding: 12px;
+            border: 1px solid #d9a441;
+            background: #fff7e6;
+            color: #8a5a00;
+            line-height: 1.45;
+        }
+
+        .warning.hidden {
+            display: none !important;
         }
 
         .output textarea {
@@ -190,7 +202,8 @@
 <body>
     <h1>Email Tool Builder</h1>
     <p class="small">
-        This creates a shareable link for a campaign email page hosted on your GitHub Pages site.
+        This creates a shareable link for the campaign email page hosted at
+        <strong>johnathaninkley.github.io/emailtool.github.io</strong>.
         The LRU logo and background image are fixed.
     </p>
 
@@ -198,12 +211,6 @@
         <div>
             <div class="panel">
                 <h2>Page content</h2>
-
-                <label for="baseUrl">Base URL of your public tool page</label>
-                <input type="url" id="baseUrl" placeholder="https://yourusername.github.io/yourrepo/index.html">
-
-                <label for="pageTitle">Browser tab title</label>
-                <input type="text" id="pageTitle" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
 
                 <label for="heading">Main heading</label>
                 <input type="text" id="heading" placeholder="Mayor Fiaz: Meet with local Gypsy and Traveller families NOW!">
@@ -271,6 +278,8 @@
                     <textarea id="generatedLink" readonly></textarea>
                     <p><a id="openLink" href="#" target="_blank" rel="noopener noreferrer">Open generated email tool</a></p>
                 </div>
+
+                <div id="lengthWarning" class="warning hidden"></div>
             </div>
         </div>
 
@@ -298,6 +307,10 @@
     </div>
 
     <script>
+        const PUBLIC_TOOL_BASE_URL = 'https://johnathaninkley.github.io/emailtool.github.io/';
+        const URL_WARNING_THRESHOLD = 6000;
+        const URL_DANGER_THRESHOLD = 8000;
+
         function updateVisibility() {
             document.getElementById('postcodeOptions').classList.toggle(
                 'hidden',
@@ -316,9 +329,9 @@
         }
 
         function updatePreview() {
-            document.getElementById('previewHeading').textContent =
-                document.getElementById('heading').value.trim() || 'Email Tool Heading';
+            const heading = document.getElementById('heading').value.trim() || 'Email Tool Heading';
 
+            document.getElementById('previewHeading').textContent = heading;
             document.getElementById('previewIntro').textContent =
                 document.getElementById('intro').value || 'Your intro text will appear here.';
 
@@ -338,7 +351,6 @@
 
         function buildConfig() {
             return {
-                pageTitle: document.getElementById('pageTitle').value.trim(),
                 heading: document.getElementById('heading').value.trim(),
                 intro: document.getElementById('intro').value,
                 namePlaceholder: document.getElementById('namePlaceholder').value.trim(),
@@ -357,21 +369,38 @@
             };
         }
 
-        function generateLink() {
-            const baseUrl = document.getElementById('baseUrl').value.trim();
-            if (!baseUrl) {
-                alert('Please enter the base URL for your public tool page.');
+        function updateLengthWarning(urlLength) {
+            const warningEl = document.getElementById('lengthWarning');
+
+            if (urlLength >= URL_DANGER_THRESHOLD) {
+                warningEl.innerHTML =
+                    `<strong>Warning:</strong> this generated URL is very long (${urlLength.toLocaleString()} characters) and may not work reliably when shared or opened in all browsers, apps or messaging platforms. You may need to shorten the email body.`;
+                warningEl.classList.remove('hidden');
                 return;
             }
 
+            if (urlLength >= URL_WARNING_THRESHOLD) {
+                warningEl.innerHTML =
+                    `<strong>Heads up:</strong> this generated URL is quite long (${urlLength.toLocaleString()} characters). It may still work, but long links can sometimes break when pasted into some apps or websites.`;
+                warningEl.classList.remove('hidden');
+                return;
+            }
+
+            warningEl.textContent = '';
+            warningEl.classList.add('hidden');
+        }
+
+        function generateLink() {
             const config = buildConfig();
             const json = JSON.stringify(config);
             const compressed = LZString.compressToEncodedURIComponent(json);
-            const fullLink = `${baseUrl}#data=${compressed}`;
+            const fullLink = `${PUBLIC_TOOL_BASE_URL}#data=${compressed}`;
 
             document.getElementById('generatedLink').value = fullLink;
             document.getElementById('openLink').href = fullLink;
             document.getElementById('output').style.display = 'block';
+
+            updateLengthWarning(fullLink.length);
         }
 
         async function copyLink() {
@@ -399,11 +428,12 @@
         ];
 
         fieldsToWatch.forEach(id => {
-            document.getElementById(id).addEventListener('input', () => {
+            const el = document.getElementById(id);
+            el.addEventListener('input', () => {
                 updateVisibility();
                 updatePreview();
             });
-            document.getElementById(id).addEventListener('change', () => {
+            el.addEventListener('change', () => {
                 updateVisibility();
                 updatePreview();
             });
