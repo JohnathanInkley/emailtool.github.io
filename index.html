@@ -4,16 +4,25 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Tool</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
+
     <style>
         @font-face {
             font-family: "Trim Poster";
             font-display: swap;
             src: url("./TrimPosterRegular.otf") format("opentype");
         }
+
         @font-face {
             font-family: "Circular Std medium";
             font-display: swap;
             src: url("./CircularStd-Medium.otf") format("opentype");
+        }
+
+        :root {
+            --fixed-logo-url: "https://londonrentersunion.org/wp-content/uploads/2018/05/lru-logo-from-eps.png";
+            --fixed-background-url: "https://pbs.twimg.com/media/FE-ZJDbXsAc9IPZ?format=jpg&name=large";
         }
 
         body {
@@ -23,17 +32,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            background: #f5f5f5;
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-attachment: fixed;
-            background-size: cover;
-        }
-
-        body.has-bg {
-            background-image:
+            background:
                 linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
-                var(--bg-image);
+                url('https://pbs.twimg.com/media/FE-ZJDbXsAc9IPZ?format=jpg&name=large') no-repeat center center fixed;
+            background-size: cover;
         }
 
         header {
@@ -51,8 +53,8 @@
             max-width: 600px;
             margin: 20px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.92);
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.12);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: calc(100% - 40px);
             box-sizing: border-box;
         }
@@ -64,8 +66,11 @@
             margin-top: 0;
         }
 
-        p {
+        p, label, .helper-text, .error-box {
             font-family: 'Circular Std medium', Arial, sans-serif;
+        }
+
+        p {
             font-size: 1em;
             line-height: 1.5;
             color: #666;
@@ -110,16 +115,26 @@
             background-color: #45a049;
         }
 
-        .error {
-            color: #b00020;
+        .hidden {
+            display: none !important;
+        }
+
+        .error-box {
+            margin-top: 16px;
+            padding: 12px;
+            background: #ffe8e8;
+            color: #8b0000;
+            border: 1px solid #d88;
             text-align: center;
-            font-family: Arial, sans-serif;
         }
     </style>
 </head>
 <body>
-    <header id="header" style="display:none;">
-        <img id="logo" alt="Logo">
+    <header>
+        <img
+            src="https://londonrentersunion.org/wp-content/uploads/2018/05/lru-logo-from-eps.png"
+            alt="London Renters Union Logo"
+        >
     </header>
 
     <main>
@@ -127,36 +142,53 @@
         <p id="intro">This page has not been configured yet.</p>
 
         <form id="email-form">
-            <input type="text" id="name" placeholder="Enter your name" required>
+            <input
+                type="text"
+                id="name"
+                placeholder="Enter your name"
+                required
+            >
+
+            <input
+                type="text"
+                id="postcode"
+                placeholder="Enter your postcode"
+                class="hidden"
+            >
+
             <button type="submit" id="submit-button" disabled>Send Email</button>
         </form>
 
-        <p id="error" class="error" style="display:none;"></p>
+        <div id="error-box" class="error-box hidden"></div>
     </main>
 
     <script>
-        function decodeConfigFromHash() {
+        function showError(message) {
+            const errorBox = document.getElementById('error-box');
+            errorBox.textContent = message;
+            errorBox.classList.remove('hidden');
+        }
+
+        function getConfigFromUrl() {
             const hash = window.location.hash.startsWith('#')
                 ? window.location.hash.slice(1)
                 : window.location.hash;
 
             const params = new URLSearchParams(hash);
-            const data = params.get('data');
-            if (!data) return null;
+            const compressed = params.get('data');
 
-            try {
-                const json = decodeURIComponent(escape(atob(data)));
-                return JSON.parse(json);
-            } catch (err) {
-                console.error('Could not decode config:', err);
+            if (!compressed) {
                 return null;
             }
-        }
 
-        function showError(message) {
-            const errorEl = document.getElementById('error');
-            errorEl.textContent = message;
-            errorEl.style.display = 'block';
+            try {
+                const json = LZString.decompressFromEncodedURIComponent(compressed);
+                if (!json) return null;
+                return JSON.parse(json);
+            } catch (err) {
+                console.error(err);
+                return null;
+            }
         }
 
         function applyConfig(config) {
@@ -164,15 +196,15 @@
                 pageTitle: 'Email Tool',
                 heading: 'Email Tool',
                 intro: '',
-                logoUrl: '',
-                backgroundImageUrl: '',
                 namePlaceholder: 'Enter your name',
+                postcodePlaceholder: 'Enter your postcode',
                 buttonText: 'Send Email',
                 toEmail: '',
                 ccEmail: '',
                 bccEmail: '',
                 subject: '',
-                emailBody: ''
+                emailBody: '',
+                askPostcode: false
             };
 
             const cfg = { ...defaults, ...config };
@@ -183,52 +215,60 @@
             document.getElementById('name').placeholder = cfg.namePlaceholder;
             document.getElementById('submit-button').textContent = cfg.buttonText;
 
-            if (cfg.logoUrl) {
-                const header = document.getElementById('header');
-                const logo = document.getElementById('logo');
-                logo.src = cfg.logoUrl;
-                header.style.display = 'block';
-            }
-
-            if (cfg.backgroundImageUrl) {
-                document.body.classList.add('has-bg');
-                document.body.style.setProperty('--bg-image', `url("${cfg.backgroundImageUrl}")`);
+            const postcodeInput = document.getElementById('postcode');
+            if (cfg.askPostcode) {
+                postcodeInput.classList.remove('hidden');
+                postcodeInput.placeholder = cfg.postcodePlaceholder;
+                postcodeInput.required = true;
             }
 
             return cfg;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            const config = decodeConfigFromHash();
+            const config = getConfigFromUrl();
 
             if (!config) {
-                showError('No configuration was found in the URL.');
+                showError('No valid configuration was found in the URL.');
                 return;
             }
 
             const cfg = applyConfig(config);
 
             const nameInput = document.getElementById('name');
+            const postcodeInput = document.getElementById('postcode');
             const submitButton = document.getElementById('submit-button');
             const form = document.getElementById('email-form');
 
-            nameInput.addEventListener('input', () => {
-                submitButton.disabled = !nameInput.value.trim();
-            });
+            function updateButtonState() {
+                const hasName = !!nameInput.value.trim();
+                const hasPostcode = !cfg.askPostcode || !!postcodeInput.value.trim();
+                submitButton.disabled = !(hasName && hasPostcode);
+            }
+
+            nameInput.addEventListener('input', updateButtonState);
+            postcodeInput.addEventListener('input', updateButtonState);
 
             form.addEventListener('submit', (event) => {
                 event.preventDefault();
 
                 const name = nameInput.value.trim();
-                if (!name) return;
+                const postcode = postcodeInput.value.trim();
 
                 let emailBody = cfg.emailBody || '';
+
                 if (emailBody && !emailBody.endsWith('\n')) {
                     emailBody += '\n';
                 }
-                emailBody += name;
+
+                emailBody += `\n${name}`;
+
+                if (cfg.askPostcode) {
+                    emailBody += `\n${postcode}`;
+                }
 
                 const params = new URLSearchParams();
+
                 if (cfg.ccEmail) params.set('cc', cfg.ccEmail);
                 if (cfg.bccEmail) params.set('bcc', cfg.bccEmail);
                 if (cfg.subject) params.set('subject', cfg.subject);
@@ -237,6 +277,8 @@
                 const mailtoLink = `mailto:${encodeURIComponent(cfg.toEmail || '')}?${params.toString()}`;
                 window.location.href = mailtoLink;
             });
+
+            updateButtonState();
         });
     </script>
 </body>
